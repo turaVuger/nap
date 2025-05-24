@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon To-Do Mobile</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            background: #0f0f1a;
+            color: #fff;
+            height: 100vh;
+            width: 100vw;
+            touch-action: manipulation;
+        }
+        
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 95%;
+            max-width: 500px;
+            margin: 10px auto;
+            background: rgba(15, 15, 30, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(100, 65, 255, 0.3);
+            border: 1px solid rgba(100, 65, 255, 0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #fff;
+            font-size: 1.5rem;
+            text-shadow: 0 0 10px rgba(100, 65, 255, 0.7);
+            margin: 0 0 15px 0;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .input-row {
+            display: flex;
+            width: 100%;
+            gap: 5px;
+        }
+        
+        input, select, button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            width: 100%;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+        }
+        
+        input[type="date"], input[type="time"] {
+            min-width: 0;
+        }
+        
+        select {
+            min-width: 0;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #6441ff, #9e4dff);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+        
+        button:active {
+            transform: translateY(1px);
+            opacity: 0.9;
+        }
+        
+        ul {
+            list-style: none;
+            padding: 0;
+            max-height: 50vh;
+            overflow-y: auto;
+            margin: 0;
+        }
+        
+        li {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #6441ff;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        li:active {
+            transform: scale(0.98);
+        }
+        
+        .task-info {
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        
+        .task-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 1rem;
+        }
+        
+        .task-meta {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 5px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .delete-btn {
+            background: #ff4164;
+            padding: 8px 12px;
+            border-radius: 6px;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+        
+        /* Анимированные элементы фона */
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.7;
+            animation: float 8s infinite ease-in-out;
+            z-index: 1;
+        }
+        
+        .laser {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(100,65,255,0), rgba(100,65,255,0.8), rgba(100,65,255,0));
+            filter: blur(1px);
+            animation: laserScan 10s infinite linear;
+            transform-origin: left center;
+            z-index: 1;
+        }
+        
+        .latin-phrase {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.3);
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+            font-size: 1.2rem;
+            white-space: nowrap;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+            animation: floatPhrase linear;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0);
+            }
+            25% {
+                transform: translate(20vw, 10vh);
+            }
+            50% {
+                transform: translate(-10vw, 20vh);
+            }
+            75% {
+                transform: translate(-20vw, -10vh);
+            }
+        }
+        
+        @keyframes laserScan {
+            0% {
+                transform: rotate(0deg) translateX(0) scaleX(0);
+                opacity: 0;
+            }
+            10% {
+                transform: rotate(0deg) translateX(0) scaleX(1);
+                opacity: 1;
+            }
+            90% {
+                transform: rotate(180deg) translateX(-100vw) scaleX(1);
+                opacity: 1;
+            }
+            100% {
+                transform: rotate(180deg) translateX(-100vw) scaleX(0);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes floatPhrase {
+            0% {
+                transform: translateX(100vw) translateY(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.7;
+            }
+            90% {
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateX(-100%) translateY(20vh);
+                opacity: 0;
+            }
+        }
+        
+        /* Стили для полосы прокрутки */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(#6441ff, #9e4dff);
+            border-radius: 5px;
+        }
+        
+        /* Анимация напоминания */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 65, 100, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 65, 100, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 65, 100, 0); }
+        }
+        
+        .reminder-active {
+            animation: pulse 2s infinite;
+        }
+        
+        .reminder-active::after {
+            content: '🔔';
+            margin-left: 5px;
+        }
+        
+        /* Оптимизация для маленьких экранов */
+        @media (max-width: 400px) {
+            .container {
+                width: 98%;
+                padding: 10px;
+            }
+            
+            input, select, button {
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+            
+            .task-meta {
+                font-size: 0.7rem;
+                gap: 5px;
+            }
+            
+            .delete-btn {
+                padding: 6px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Neon To-Do</h1>
+        <div class="input-group">
+            <div class="input-row">
+                <input type="text" id="taskInput" placeholder="Новая задача..." autocapitalize="sentences">
+            </div>
+            <div class="input-row">
+                <input type="date" id="taskDate">
+                <input type="time" id="taskTime">
+            </div>
+            <div class="input-row">
+                <select id="taskPriority">
+                    <option value="low">Низкий</option>
+                    <option value="medium" selected>Средний</option>
+                    <option value="high">Высокий</option>
+                </select>
+                <button id="addBtn">➕ Добавить</button>
+            </div>
+        </div>
+        <ul id="taskList"></ul>
+    </div>
+
+    <!-- Анимированные элементы фона -->
+    <div id="shapes-container"></div>
+    <div id="lasers-container"></div>
+    <div id="phrases-container"></div>
+
+    <audio id="notificationSound" src="https://www.soundjay.com/buttons/sounds/button-09.mp3" preload="auto"></audio>
+    <audio id="reminderSound" src="https://www.soundjay.com/mechanical/sounds/alarm-clock-01.mp3" preload="auto"></audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const taskInput = document.getElementById('taskInput');
+            const taskDate = document.getElementById('taskDate');
+            const taskTime = document.getElementById('taskTime');
+            const taskPriority = document.getElementById('taskPriority');
+            const addBtn = document.getElementById('addBtn');
+            const taskList = document.getElementById('taskList');
+            const notificationSound = document.getElementById('notificationSound');
+            const reminderSound = document.getElementById('reminderSound');
+            
+            // Латинские фразы
+            const latinPhrases = [
+                "Carpe diem",
+                "Veni, vidi, vici",
+                "Cogito, ergo sum",
+                "In vino veritas",
+                "Memento mori",
+                "Per aspera ad astra",
+                "Dum spiro, spero",
+                "Ars longa, vita brevis",
+                "E pluribus unum",
+                "Acta non verba",
+                "Tempus fugit",
+                "Sic transit gloria mundi",
+                "Non scholae, sed vitae",
+                "Ad astra per aspera",
+                "Alea iacta est",
+                "Festina lente",
+                "Si vis pacem, para bellum",
+                "Amor vincit omnia",
+                "Lupus in fabula",
+                "Homo homini lupus est"
+            ];
+            
+            // Установка даты и времени по умолчанию
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            taskDate.min = today;
+            taskDate.value = today;
+            
+            // Установка времени (текущее + 1 час)
+            const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
+            taskTime.value = nextHour.toTimeString().substring(0, 5);
+            
+            // Создание анимированного фона
+            createShapes();
+            createLasers();
+            startLatinPhrases();
+            
+            // Загрузка задач
+            loadTasks();
+            
+            // Проверка напоминаний
+            setInterval(checkReminders, 60000);
+            
+            // Добавление задачи
+            addBtn.addEventListener('click', addTask);
+            taskInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addTask();
+            });
+            
+            function addTask() {
+                const taskText = taskInput.value.trim();
+                if (!taskText) return;
+                
+                const taskDateValue = taskDate.value;
+                const taskTimeValue = taskTime.value;
+                const priority = taskPriority.value;
+                
+                const reminderDateTime = new Date(`${taskDateValue}T${taskTimeValue}`);
+                
+                const task = {
+                    id: Date.now(),
+                    text: taskText,
+                    date: taskDateValue,
+                    time: taskTimeValue,
+                    reminder: reminderDateTime.getTime(),
+                    priority: priority,
+                    completed: false,
+                    notified: false
+                };
+                
+                saveTask(task);
+                renderTask(task);
+                
+                notificationSound.play();
+                taskInput.value = '';
+                taskInput.focus();
+            }
+            
+            function saveTask(task) {
+                let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                tasks.push(task);
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            }
+            
+            function loadTasks() {
+                const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                tasks.forEach(renderTask);
+                checkReminders();
+            }
+            
+            function renderTask(task) {
+                const li = document.createElement('li');
+                li.dataset.id = task.id;
+                
+                if (task.reminder <= Date.now() && !task.notified) {
+                    li.classList.add('reminder-active');
+                }
+                
+                let priorityColor;
+                switch(task.priority) {
+                    case 'high': priorityColor = '#ff4164'; break;
+                    case 'medium': priorityColor = '#ffb841'; break;
+                    case 'low': priorityColor = '#41ff5e'; break;
+                    default: priorityColor = '#6441ff';
+                }
+                
+                li.style.borderLeftColor = priorityColor;
+                
+                const dateObj = new Date(task.date);
+                const formattedDate = dateObj.toLocaleDateString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                
+                const formattedTime = task.time || 'без напоминания';
+                
+                li.innerHTML = `
+                    <div class="task-info">
+                        <div class="task-text">${task.text}</div>
+                        <div class="task-meta">
+                            <span>📅 ${formattedDate}</span>
+                            <span>⏰ ${formattedTime}</span>
+                            <span>${getPriorityIcon(task.priority)} ${getPriorityText(task.priority)}</span>
+                        </div>
+                    </div>
+                    <button class="delete-btn">×</button>
+                `;
+                
+                li.querySelector('.delete-btn').addEventListener('click', function() {
+                    deleteTask(task.id);
+                    li.remove();
+                });
+                
+                taskList.appendChild(li);
+            }
+            
+            function getPriorityIcon(priority) {
+                switch(priority) {
+                    case 'high': return '🔴';
+                    case 'medium': return '🟡';
+                    case 'low': return '🟢';
+                    default: return '';
+                }
+            }
+            
+            function getPriorityText(priority) {
+                switch(priority) {
+                    case 'high': return 'Высокий';
+                    case 'medium': return 'Средний';
+                    case 'low': return 'Низкий';
+                    default: return '';
+                }
+            }
+            
+            function deleteTask(id) {
+                let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                tasks = tasks.filter(task => task.id !== id);
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            }
+            
+            function checkReminders() {
+                const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                const now = Date.now();
+                
+                tasks.forEach(task => {
+                    if (task.reminder && task.reminder <= now && !task.notified) {
+                        reminderSound.play();
+                        task.notified = true;
+                        localStorage.setItem('tasks', JSON.stringify(tasks));
+                        
+                        const li = document.querySelector(`li[data-id="${task.id}"]`);
+                        if (li) {
+                            li.classList.add('reminder-active');
+                            
+                            // Встряхивание для привлечения внимания
+                            li.style.animation = 'none';
+                            setTimeout(() => {
+                                li.style.animation = 'pulse 2s infinite';
+                            }, 10);
+                        }
+                    }
+                });
+            }
+            
+            function createShapes() {
+                const colors = [
+                    'rgba(100, 65, 255, 0.7)',
+                    'rgba(158, 77, 255, 0.7)',
+                    'rgba(255, 65, 100, 0.7)',
+                    'rgba(255, 184, 65, 0.7)',
+                    'rgba(65, 255, 94, 0.7)'
+                ];
+                
+                const container = document.getElementById('shapes-container');
+                
+                for (let i = 0; i < 8; i++) {
+                    const shape = document.createElement('div');
+                    shape.className = 'shape';
+                    
+                    const size = Math.random() * 150 + 50;
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    const left = Math.random() * 100;
+                    const top = Math.random() * 100;
+                    const duration = Math.random() * 5 + 5;
+                    const delay = Math.random() * 5;
+                    
+                    shape.style.width = `${size}px`;
+                    shape.style.height = `${size}px`;
+                    shape.style.background = color;
+                    shape.style.left = `${left}%`;
+                    shape.style.top = `${top}%`;
+                    shape.style.animationDuration = `${duration}s`;
+                    shape.style.animationDelay = `-${delay}s`;
+                    
+                    container.appendChild(shape);
+                }
+            }
+            
+            function createLasers() {
+                const container = document.getElementById('lasers-container');
+                const colors = [
+                    'rgba(100, 65, 255, 0.8)',
+                    'rgba(255, 65, 100, 0.8)',
+                    'rgba(65, 255, 94, 0.8)'
+                ];
+                
+                for (let i = 0; i < 2; i++) {
+                    const laser = document.createElement('div');
+                    laser.className = 'laser';
+                    
+                    const width = Math.random() * 50 + 30;
+                    const color = colors[i % colors.length];
+                    const top = Math.random() * 100;
+                    const delay = Math.random() * 5;
+                    
+                    laser.style.width = `${width}vw`;
+                    laser.style.background = `linear-gradient(90deg, rgba(100,65,255,0), ${color}, rgba(100,65,255,0))`;
+                    laser.style.top = `${top}%`;
+                    laser.style.animationDelay = `${delay}s`;
+                    
+                    container.appendChild(laser);
+                }
+            }
+            
+            function startLatinPhrases() {
+                setInterval(createLatinPhrase, 8000);
+                // Создать несколько фраз сразу
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(createLatinPhrase, i * 2000);
+                }
+            }
+            
+            function createLatinPhrase() {
+                const container = document.getElementById('phrases-container');
+                const phrase = document.createElement('div');
+                phrase.className = 'latin-phrase';
+                
+                const text = latinPhrases[Math.floor(Math.random() * latinPhrases.length)];
+                const top = Math.random() * 80 + 10;
+                const duration = Math.random() * 15 + 15;
+                const size = Math.random() * 0.5 + 0.8;
+                const opacity = Math.random() * 0.4 + 0.3;
+                
+                phrase.textContent = text;
+                phrase.style.top = `${top}%`;
+                phrase.style.animationDuration = `${duration}s`;
+                phrase.style.fontSize = `${size}rem`;
+                phrase.style.opacity = opacity;
+                
+                container.appendChild(phrase);
+                
+                // Удалить фразу после анимации
+                setTimeout(() => {
+                    phrase.remove();
+                }, duration * 1000);
+            }
+        });
+    </script>
+</body>
+</html>
